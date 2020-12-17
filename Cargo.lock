@@ -123,10 +123,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cty"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7313c0d620d0cb4dbd9d019e461a4beb501071ff46ec0ab933efb4daa76d73e3"
 name = "crc32fast"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -145,6 +141,12 @@ dependencies = [
  "cfg-if 1.0.0",
  "lazy_static",
 ]
+
+[[package]]
+name = "cty"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7313c0d620d0cb4dbd9d019e461a4beb501071ff46ec0ab933efb4daa76d73e3"
 
 [[package]]
 name = "flate2"
@@ -256,12 +258,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1482821306169ec4d07f6aca392a4681f66c75c9918aa49641a2595db64053cb"
 
 [[package]]
-name = "minhook-sys"
-version = "0.1.0"
-source = "git+https://github.com/metherul/minhook-sys.git?branch=main#92b050265cbd2445d75e679947c5a7eccaba8da2"
-dependencies = [
- "cty",
- "winapi",
 name = "log"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -275,6 +271,15 @@ name = "memchr"
 version = "2.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
+
+[[package]]
+name = "minhook-sys"
+version = "0.1.0"
+source = "git+https://github.com/metherul/minhook-sys.git?branch=main#92b050265cbd2445d75e679947c5a7eccaba8da2"
+dependencies = [
+ "cty",
+ "winapi",
+]
 
 [[package]]
 name = "miniz_oxide"
