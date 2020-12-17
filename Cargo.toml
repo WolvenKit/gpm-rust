@@ -2,4 +2,5 @@
 members = [
 	"gpm_cli",
 	"gpm_core",
+	"gpm_vfs",
 ]
