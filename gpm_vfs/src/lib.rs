@@ -1,5 +1,6 @@
 mod minhook;
+use std::path::Path;
 
-fn main() {
-    println!("Hello, world!");
+fn init_vfs(config: &Path) {
+
 }
