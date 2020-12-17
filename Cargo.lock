@@ -48,6 +48,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cty"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7313c0d620d0cb4dbd9d019e461a4beb501071ff46ec0ab933efb4daa76d73e3"
+
+[[package]]
 name = "gpm_cli"
 version = "0.1.0"
 dependencies = [
@@ -67,6 +73,10 @@ dependencies = [
 [[package]]
 name = "gpm_vfs"
 version = "0.1.0"
+dependencies = [
+ "gpm_core",
+ "minhook-sys",
+]
 
 [[package]]
 name = "hermit-abi"
@@ -82,6 +92,15 @@ name = "libc"
 version = "0.2.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1482821306169ec4d07f6aca392a4681f66c75c9918aa49641a2595db64053cb"
+
+[[package]]
+name = "minhook-sys"
+version = "0.1.0"
+source = "git+https://github.com/metherul/minhook-sys.git?branch=main#92b050265cbd2445d75e679947c5a7eccaba8da2"
+dependencies = [
+ "cty",
+ "winapi",
+]
 
 [[package]]
 name = "strsim"
