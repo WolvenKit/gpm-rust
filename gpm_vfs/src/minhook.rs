@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use minhook_sys::*;
+use anyhow::Result;
 
 #[derive(thiserror::Error, Debug)]
 pub enum MinhookError {
@@ -135,6 +136,21 @@ mod tests {
 
     #[test]
     fn test_uninit_err() {
-        minhook::uninitialize().unwrap();
+        let result = minhook::initialize();
+        assert!(result.is_ok());
+        let result = minhook::uninitialize();
+        assert!(result.is_ok());
+        let result = minhook::uninitialize();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_init_err() {
+        let result = minhook::initialize();
+        assert!(result.is_ok());
+        let result = minhook::initialize();
+        assert!(result.is_err());
+        let result = minhook::uninitialize();
+        assert!(result.is_ok());
     }
 }
