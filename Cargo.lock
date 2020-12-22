@@ -231,8 +231,10 @@ dependencies = [
 name = "gpm_vfs"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "gpm_core",
  "minhook-sys",
+ "thiserror",
 ]
 
 [[package]]

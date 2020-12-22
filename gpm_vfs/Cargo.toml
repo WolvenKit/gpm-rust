@@ -6,3 +6,5 @@ edition = "2018"
 [dependencies]
 minhook-sys = { git = "https://github.com/metherul/minhook-sys.git", branch = "main" }
 gpm_core = { path = "../gpm_core"}
+anyhow = "1.0.35"
+thiserror = "1.0.22"
