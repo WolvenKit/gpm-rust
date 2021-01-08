@@ -93,6 +93,10 @@ pub fn create_package<D: Write + Seek>(
             )
         })?;
 
+        if content_rel_path.iter().next() == None {
+            continue;
+        };
+
         if content_rel_path == PathBuf::from(JSON_CONFIG_PATH) {
             continue;
         };
