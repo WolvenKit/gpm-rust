@@ -9,7 +9,7 @@ use crate::package::{Package, PackageInformation, PackageInformationExtraData};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-struct StoredPackageInformation {
+pub struct StoredPackageInformation {
     #[serde(default)]
     creator: Option<String>,
     #[serde(default)]
@@ -79,6 +79,13 @@ impl From<&PackageInformation> for StoredPackageInformation {
             install_strategies: package.install_strategies.clone(),
             extra_data,
         }
+    }
+}
+
+impl StoredPackageInformation {
+    pub fn new_from_json_reader<T: Read>(reader: T) -> anyhow::Result<Self> {
+        let result = serde_json::from_reader::<_, Self>(reader)?;
+        Ok(result)
     }
 }
 

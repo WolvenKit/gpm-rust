@@ -29,6 +29,23 @@ fn main() -> Result<(), anyhow::Error> {
                         .help("the output file to create"),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("install")
+                .about("install a mod for the current profile")
+                .arg(
+                    Arg::with_name("input")
+                        .index(1)
+                        .required(true)
+                        .help("the path to the content to install. As of now, it should be a .zip file containing a packaged mod")
+                )
+                .arg(
+                    Arg::with_name("store_path")
+                        .short("s")
+                        .required(true)
+                        .takes_value(true)
+                        .help("the path to the store path. Required as of now, as it can't be auto detected")
+                )
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -38,6 +55,12 @@ fn main() -> Result<(), anyhow::Error> {
                 input_dir: PathBuf::from(archive_arg.value_of("input_dir").unwrap_or(".")),
                 output_file: PathBuf::from(archive_arg.value_of("output_file").unwrap()), //unwrap: output_file is required
             })?;
+        }
+        ("install", Some(install_arg)) => {
+            commands::install::install(commands::install::InstallParameter {
+                input: install_arg.value_of("input").unwrap().to_string(),
+                store_path: PathBuf::from(install_arg.value_of("store_path").unwrap()),
+            })?
         }
         _ => println!("sub command unknown or unspecified"),
     };
