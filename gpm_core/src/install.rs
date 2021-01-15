@@ -7,7 +7,6 @@ use std::env::current_dir;
 use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
-use zip;
 
 #[derive(Debug)]
 pub enum PackageInput {

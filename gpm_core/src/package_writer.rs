@@ -15,7 +15,6 @@ use zip::{
     CompressionMethod,
 };
 
-use ignore;
 use ignore::gitignore::GitignoreBuilder;
 
 #[derive(thiserror::Error, Debug)]

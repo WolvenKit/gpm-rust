@@ -1,12 +1,19 @@
 use clap::{App, Arg, SubCommand};
 use std::path::PathBuf;
 mod commands;
+use gpm_core::config::GpmConfig;
 
 fn main() -> Result<(), anyhow::Error> {
     let matches = App::new("gpm")
         .version("0.1")
         .author("TODO <TODO@users.noreply.github.com>")
         .about("Games Package Manager utility")
+        .arg(
+            Arg::with_name("store_path")
+            .short("s")
+            .takes_value(true)
+            .help("the path to the store path.")
+        )
         .subcommand(
             SubCommand::with_name("init")
                 .version("0.1")
@@ -38,15 +45,15 @@ fn main() -> Result<(), anyhow::Error> {
                         .required(true)
                         .help("the path to the content to install. As of now, it should be a .zip file containing a packaged mod")
                 )
-                .arg(
-                    Arg::with_name("store_path")
-                        .short("s")
-                        .required(true)
-                        .takes_value(true)
-                        .help("the path to the store path. Required as of now, as it can't be auto detected")
-                )
         )
         .get_matches();
+
+    // load configs
+    let mut config = GpmConfig::load_config().unwrap();
+
+    if let Some(custom_store_path) = matches.value_of("store_path") {
+        config.store_path = PathBuf::from(custom_store_path);
+    };
 
     match matches.subcommand() {
         ("init", _) => commands::init::init()?,
@@ -56,12 +63,12 @@ fn main() -> Result<(), anyhow::Error> {
                 output_file: PathBuf::from(archive_arg.value_of("output_file").unwrap()), //unwrap: output_file is required
             })?;
         }
-        ("install", Some(install_arg)) => {
-            commands::install::install(commands::install::InstallParameter {
+        ("install", Some(install_arg)) => commands::install::install(
+            commands::install::InstallParameter {
                 input: install_arg.value_of("input").unwrap().to_string(),
-                store_path: PathBuf::from(install_arg.value_of("store_path").unwrap()),
-            })?
-        }
+            },
+            config,
+        )?,
         _ => println!("sub command unknown or unspecified"),
     };
 
