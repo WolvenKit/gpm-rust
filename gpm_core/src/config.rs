@@ -1,8 +1,11 @@
 use crate::mod_storage::ModStorage;
+
+use crate::package::Package;
 use anyhow::Context;
 use directories::ProjectDirs;
 use serde::Deserialize;
 use std::fs::File;
+
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
@@ -13,6 +16,8 @@ use std::path::PathBuf;
 struct GpmConfigStored {
     #[serde(default)]
     store_path: Option<PathBuf>,
+    #[serde(default)]
+    default_profile_path: Option<PathBuf>,
 }
 
 /// represent the configuration of gpm. At the moment, it is loaded (if possible). The path for it
@@ -21,6 +26,7 @@ struct GpmConfigStored {
 /// default value are otherwise provided.
 pub struct GpmConfig {
     pub store_path: PathBuf,
+    pub profile_path: PathBuf,
 }
 
 impl GpmConfig {
@@ -49,11 +55,29 @@ impl GpmConfig {
                 .join("store")
         };
 
-        Ok(Self { store_path })
+        // TODO: this will fail it the target folder doesn't exist. Just expand ./ and ~ at start
+        // of path.
+        let profile_path = if let Some(default_profile_path) = config.default_profile_path {
+            default_profile_path
+        } else {
+            PathBuf::from(".")
+        }
+        .canonicalize()
+        .context("can't get the absolute path of the current folder")?;
+
+        Ok(Self {
+            store_path,
+            profile_path,
+        })
     }
 
     /// get a [`ModStorage`] object that use the store defined in the config.
     pub fn default_store(&self) -> ModStorage {
         ModStorage::new(self.store_path.clone())
+    }
+
+    /// return the root [`Package`], known as the profile
+    pub fn profile(&self) -> Package {
+        todo!()
     }
 }

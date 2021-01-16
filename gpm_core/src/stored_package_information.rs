@@ -1,10 +1,6 @@
-use std::fs::File;
-use std::io;
-use std::io::{BufReader, Read};
-use std::path::{Path, PathBuf};
-
-use crate::constants::TOML_CONFIG_PATH;
-use crate::package::{Package, PackageInformation, PackageInformationExtraData};
+use crate::package_information::{PackageInformation, PackageInformationExtraData};
+/// This module contain tool used to read and write config.toml and config.json
+use std::io::Read;
 
 use serde::{Deserialize, Serialize};
 
@@ -83,44 +79,17 @@ impl From<&PackageInformation> for StoredPackageInformation {
 }
 
 impl StoredPackageInformation {
-    pub fn new_from_json_reader<T: Read>(reader: T) -> anyhow::Result<Self> {
-        let result = serde_json::from_reader::<_, Self>(reader)?;
-        Ok(result)
+    pub fn new_from_json_reader(reader: &mut impl Read) -> anyhow::Result<Self> {
+        Ok(serde_json::from_reader::<_, Self>(reader)?)
     }
-}
 
-#[derive(thiserror::Error, Debug)]
-pub enum LoadPackageFromProjectError {
-    #[error("io error with the file {0}")]
-    FileIOError(PathBuf, io::Error),
-    #[error("error while parsing the toml file {0}")]
-    TomlDecodeError(PathBuf, #[source] toml::de::Error),
-}
+    pub fn new_from_toml_reader(reader: &mut impl Read) -> anyhow::Result<Self> {
+        let mut buffer = Vec::new();
+        reader.read_to_end(&mut buffer)?;
+        Ok(toml::from_slice(&buffer)?)
+    }
 
-pub fn load_package_from_project(
-    project_path: &Path,
-) -> Result<Package, LoadPackageFromProjectError> {
-    let config_path = project_path.join(TOML_CONFIG_PATH);
-    let mut config_file =
-        BufReader::new(File::open(&config_path).map_err(|err| {
-            LoadPackageFromProjectError::FileIOError(config_path.to_path_buf(), err)
-        })?);
-    let mut config_content = Vec::new();
-    config_file
-        .read_to_end(&mut config_content)
-        .map_err(|err| LoadPackageFromProjectError::FileIOError(config_path.to_path_buf(), err))?;
-    let stored_package_information = toml::from_slice::<StoredPackageInformation>(&config_content)
-        .map_err(|err| {
-            LoadPackageFromProjectError::TomlDecodeError(config_path.to_path_buf(), err)
-        })?;
-    Ok(Package {
-        information: stored_package_information.into(),
-    })
-}
-
-pub fn get_project_config_json(
-    package_information: &PackageInformation,
-) -> Result<Vec<u8>, serde_json::Error> {
-    let stored_package_information = StoredPackageInformation::from(package_information);
-    serde_json::to_vec_pretty(&stored_package_information)
+    pub fn generate_json(&self) -> serde_json::Result<Vec<u8>> {
+        serde_json::to_vec(&self)
+    }
 }

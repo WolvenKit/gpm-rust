@@ -1,158 +1,76 @@
-/// Code below is used to represent a package that can be downloaded, installed,
-/// or created by the user and published to the store.
+use crate::constants::{JSON_CONFIG_PATH, TOML_CONFIG_PATH};
+use crate::package_information::PackageInformation;
+use crate::stored_package_information::StoredPackageInformation;
+use anyhow::Context;
+use std::fs::File;
 
-pub struct PackageInformationExtraData {
-    pub key: String,
-    pub value: String,
-}
+use std::io::ErrorKind;
+use std::io::Read;
 
-impl PackageInformationExtraData {
-    pub fn new(key: &str, value: &str) -> PackageInformationExtraData {
-        PackageInformationExtraData {
-            key: key.to_owned(),
-            value: value.to_owned(),
-        }
-    }
-}
-
-pub struct RequiredPublishInformation {
-    pub creator: String,
-    pub identifier: String,
-    pub version: String,
-    pub display_name: String,
-    pub description: String,
-    pub license: String,
-}
-
-pub struct PackageInformation {
-    // required values for publied package
-    //
-    // remember to change get_required_publish_information when adding/renaming/deleting one of
-    // those
-    pub creator: Option<String>,
-    pub identifier: Option<String>,
-    pub version: Option<String>,
-    pub display_name: Option<String>,
-    pub description: Option<String>,
-    pub license: Option<String>,
-
-    // optional values
-    pub website_url: Option<String>,
-    pub dependencies: Vec<String>,
-    pub tags: Vec<String>,
-    pub install_strategies: Vec<String>,
-    pub extra_data: Vec<PackageInformationExtraData>,
-}
-
-impl PackageInformation {
-    pub fn new(
-        creator: &str,
-        identifier: &str,
-        version: &str,
-        display_name: &str,
-        description: &str,
-        license: &str,
-    ) -> PackageInformation {
-        PackageInformation {
-            creator: Some(creator.to_owned()),
-            identifier: Some(identifier.to_owned()),
-            version: Some(version.to_owned()),
-            display_name: Some(display_name.to_owned()),
-            description: Some(description.to_owned()),
-            license: Some(license.to_owned()),
-
-            website_url: None,
-            dependencies: Vec::new(),
-            tags: Vec::new(),
-            install_strategies: Vec::new(),
-            extra_data: Vec::new(),
-        }
-    }
-
-    /// return all the information required for published package
-    /// ([`RequiredPublishInformation`]), otherwise, return an error containing a
-    /// list of the missing field
-    pub fn required_publish_information(&self) -> Option<RequiredPublishInformation> {
-        Some(RequiredPublishInformation {
-            creator: self.creator.clone()?,
-            identifier: self.identifier.clone()?,
-            version: self.version.clone()?,
-            display_name: self.display_name.clone()?,
-            description: self.description.clone()?,
-            license: self.license.clone()?,
-        })
-    }
-
-    pub fn missing_publish_field(&self) -> Vec<&'static str> {
-        let mut missing_publish_field = Vec::new();
-        if self.creator.is_none() {
-            missing_publish_field.push("creator");
-        };
-        if self.identifier.is_none() {
-            missing_publish_field.push("identifier");
-        };
-        if self.version.is_none() {
-            missing_publish_field.push("version");
-        };
-        if self.display_name.is_none() {
-            missing_publish_field.push("display_name");
-        };
-        if self.description.is_none() {
-            missing_publish_field.push("description");
-        };
-        if self.license.is_none() {
-            missing_publish_field.push("license");
-        };
-        missing_publish_field
-    }
-}
+use std::path::Path;
+use std::path::PathBuf;
 
 pub struct Package {
     pub information: PackageInformation,
+    root_folder: PathBuf,
 }
 
 impl Package {
-    pub fn new(package_information: PackageInformation) -> Package {
-        Package {
-            information: package_information,
+    /// Load the package from the given root folder. It need either a config.toml or a config.json
+    /// to load successfully (with the priority given to config.toml)
+    pub fn load_from_folder(root_folder: PathBuf) -> anyhow::Result<Self> {
+        // try to load the config.toml file
+        let config_toml_path = root_folder.join(TOML_CONFIG_PATH);
+        match File::open(&config_toml_path) {
+            Ok(mut toml_file) => return Self::load_from_toml_reader(root_folder, &mut toml_file),
+            Err(err) => match err.kind() {
+                ErrorKind::NotFound => (),
+                _ => {
+                    return Err(err).context(format!("can't open the file {:?}", config_toml_path))
+                }
+            },
+        };
+        // the toml file doesn't exist, load the json one
+        let config_json_path = root_folder.join(JSON_CONFIG_PATH);
+        match File::open(&config_json_path) {
+            Ok(mut json_file) => return Self::load_from_json_reader(root_folder, &mut json_file),
+            Err(err) => match err.kind() {
+                ErrorKind::NotFound => {
+                    return Err(err).context(format!(
+                        "neither {:?} or {:?} can be loaded for the package at {:?}",
+                        config_toml_path, config_json_path, root_folder
+                    ))?
+                }
+                _ => {
+                    return Err(err).context(format!("can't open the file {:?}", config_json_path))
+                }
+            },
         }
     }
 
-    pub fn init_project_directory() -> Result<(), anyhow::Error> {
-        Ok(())
+    fn load_from_toml_reader(
+        root_folder: PathBuf,
+        toml_file: &mut impl Read,
+    ) -> anyhow::Result<Self> {
+        let information = StoredPackageInformation::new_from_toml_reader(toml_file)?.into();
+        Ok(Self {
+            information,
+            root_folder,
+        })
     }
 
-    pub fn publish() -> Result<(), anyhow::Error> {
-        Ok(())
+    fn load_from_json_reader(
+        root_folder: PathBuf,
+        json_file: &mut impl Read,
+    ) -> anyhow::Result<Self> {
+        let information = StoredPackageInformation::new_from_json_reader(json_file)?.into();
+        Ok(Self {
+            information,
+            root_folder,
+        })
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use crate::package::PackageInformation;
-
-    #[test]
-    fn test_publish_field() {
-        let mut package_information = PackageInformation::new(
-            "a creator",
-            "an_identifier",
-            "1.2.3",
-            "A Display Name",
-            "the description of this is a description",
-            "some version of AGPL",
-        );
-
-        assert!(package_information.missing_publish_field().is_empty());
-        let required_publish_information =
-            package_information.required_publish_information().unwrap();
-        assert_eq!(&required_publish_information.version, "1.2.3");
-
-        package_information.version = None;
-        package_information.display_name = None;
-        let missing_publish_field = package_information.missing_publish_field();
-        assert!(missing_publish_field.contains(&"version"));
-        assert!(missing_publish_field.contains(&"display_name"));
-        assert_eq!(missing_publish_field.len(), 2);
-        assert!(package_information.required_publish_information().is_none());
+    pub fn root_folder(&self) -> &Path {
+        &self.root_folder
     }
 }

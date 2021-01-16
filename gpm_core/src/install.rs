@@ -1,7 +1,7 @@
 use crate::constants::JSON_CONFIG_PATH;
 use crate::mod_storage::ModStorage;
-use crate::package::PackageInformation;
-use crate::store_project::StoredPackageInformation;
+use crate::package_information::PackageInformation;
+use crate::stored_package_information::StoredPackageInformation;
 use anyhow::Context;
 use std::env::current_dir;
 use std::fs::File;
@@ -61,21 +61,22 @@ pub fn install_from_package_input(
             let mut zip_reader = zip::read::ZipArchive::new(compressed_reader)
                 .context("can't parse the zip file")?;
             // 1. get the config.json
-            let config_file = zip_reader.by_name(JSON_CONFIG_PATH).with_context(|| {
-                format!(
-                    "can't open the {} file in the compressed archive",
-                    JSON_CONFIG_PATH,
-                )
-            })?;
-            let package_information: PackageInformation =
-                StoredPackageInformation::new_from_json_reader(config_file)
+            let package_information: PackageInformation = {
+                let mut config_file = zip_reader.by_name(JSON_CONFIG_PATH).with_context(|| {
+                    format!(
+                        "can't open the {} file in the compressed archive",
+                        JSON_CONFIG_PATH,
+                    )
+                })?;
+                StoredPackageInformation::new_from_json_reader(&mut config_file)
                     .with_context(|| {
                         format!(
                             "can't read the {} file in the compressed archive",
                             JSON_CONFIG_PATH,
                         )
                     })?
-                    .into();
+                    .into()
+            };
             let identifier = package_information
                 .identifier
                 .as_ref()

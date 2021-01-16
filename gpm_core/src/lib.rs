@@ -4,8 +4,9 @@ pub mod install;
 pub mod lockfile;
 pub mod mod_storage;
 pub mod package;
+pub mod package_information;
 pub mod package_writer;
-pub mod store_project;
+pub mod stored_package_information;
 pub mod tool;
 
 pub mod constants {
