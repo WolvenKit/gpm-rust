@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 pub struct PackageInformationExtraData {
     pub key: String,
     pub value: String,
@@ -35,9 +37,9 @@ pub struct PackageInformation {
 
     // optional values
     pub website_url: Option<String>,
-    pub dependencies: Vec<String>,
-    pub tags: Vec<String>,
-    pub install_strategies: Vec<String>,
+    pub dependencies: BTreeSet<String>,
+    pub tags: BTreeSet<String>,
+    pub install_strategies: BTreeSet<String>,
     pub extra_data: Vec<PackageInformationExtraData>,
 }
 
@@ -59,9 +61,9 @@ impl PackageInformation {
             license: Some(license.to_owned()),
 
             website_url: None,
-            dependencies: Vec::new(),
-            tags: Vec::new(),
-            install_strategies: Vec::new(),
+            dependencies: BTreeSet::new(),
+            tags: BTreeSet::new(),
+            install_strategies: BTreeSet::new(),
             extra_data: Vec::new(),
         }
     }

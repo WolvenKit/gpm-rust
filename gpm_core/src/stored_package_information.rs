@@ -1,6 +1,6 @@
 use crate::package_information::{PackageInformation, PackageInformationExtraData};
 /// This module contain tool used to read and write config.toml and config.json
-use std::io::Read;
+use std::{collections::BTreeSet, io::Read};
 
 use serde::{Deserialize, Serialize};
 
@@ -22,11 +22,11 @@ pub struct StoredPackageInformation {
     #[serde(default)]
     website_url: Option<String>,
     #[serde(default)]
-    dependencies: Vec<String>,
+    dependencies: BTreeSet<String>,
     #[serde(default)]
-    tags: Vec<String>,
+    tags: BTreeSet<String>,
     #[serde(default)]
-    install_strategies: Vec<String>,
+    install_strategies: BTreeSet<String>,
     #[serde(default)]
     extra_data: Vec<(String, String)>,
 }
@@ -91,5 +91,9 @@ impl StoredPackageInformation {
 
     pub fn generate_json(&self) -> serde_json::Result<Vec<u8>> {
         serde_json::to_vec(&self)
+    }
+
+    pub fn generate_toml(&self) -> Result<Vec<u8>, toml::ser::Error> {
+        toml::to_vec(&self)
     }
 }

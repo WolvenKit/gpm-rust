@@ -1,11 +1,9 @@
-use crate::mod_storage::ModStorage;
-
 use crate::package::Package;
+use crate::{mod_storage::ModStorage, tool::canonicalize_folder};
 use anyhow::Context;
 use directories::ProjectDirs;
 use serde::Deserialize;
 use std::fs::File;
-
 use std::io::ErrorKind;
 use std::path::PathBuf;
 
@@ -18,6 +16,8 @@ struct GpmConfigStored {
     store_path: Option<PathBuf>,
     #[serde(default)]
     default_profile_path: Option<PathBuf>,
+    #[serde(default)]
+    can_change_profile: Option<bool>,
 }
 
 /// represent the configuration of gpm. At the moment, it is loaded (if possible). The path for it
@@ -27,6 +27,7 @@ struct GpmConfigStored {
 pub struct GpmConfig {
     pub store_path: PathBuf,
     pub profile_path: PathBuf,
+    pub can_change_profile: bool,
 }
 
 impl GpmConfig {
@@ -55,20 +56,35 @@ impl GpmConfig {
                 .join("store")
         };
 
-        // TODO: this will fail it the target folder doesn't exist. Just expand ./ and ~ at start
-        // of path.
-        let profile_path = if let Some(default_profile_path) = config.default_profile_path {
+        let profile_path = canonicalize_folder(&if let Some(default_profile_path) =
+            config.default_profile_path
+        {
             default_profile_path
         } else {
             PathBuf::from(".")
-        }
-        .canonicalize()
-        .context("can't get the absolute path of the current folder")?;
+        })
+        .context("can't canonicalize the profile path")?;
+
+        let can_change_profile = config.can_change_profile.unwrap_or(true);
 
         Ok(Self {
             store_path,
             profile_path,
+            can_change_profile,
         })
+    }
+
+    /// return a GpmConfig that is totally independent of global config, with default value
+    /// focused on test. Path will be set to a canary nonexistant path.
+    ///
+    /// Use [`Self::load_config`] if you want to load correct default value.
+    pub fn empty() -> Self {
+        let default_path = PathBuf::from("./non_existant_folder_UkjhXrTwJf");
+        Self {
+            store_path: default_path.clone(),
+            profile_path: default_path.clone(),
+            can_change_profile: false,
+        }
     }
 
     /// get a [`ModStorage`] object that use the store defined in the config.
@@ -77,7 +93,8 @@ impl GpmConfig {
     }
 
     /// return the root [`Package`], known as the profile
-    pub fn profile(&self) -> Package {
-        todo!()
+    pub fn profile(&self) -> anyhow::Result<Package> {
+        Package::load_from_folder(self.profile_path.to_path_buf())
+            .context("can't load the default profile")
     }
 }

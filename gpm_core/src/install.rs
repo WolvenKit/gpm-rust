@@ -1,7 +1,7 @@
-use crate::constants::JSON_CONFIG_PATH;
 use crate::mod_storage::ModStorage;
 use crate::package_information::PackageInformation;
 use crate::stored_package_information::StoredPackageInformation;
+use crate::{constants::JSON_CONFIG_PATH, package::Package};
 use anyhow::Context;
 use std::env::current_dir;
 use std::fs::File;
@@ -30,7 +30,7 @@ impl PackageInput {
     }
 }
 
-pub fn install_from_path(store: &ModStorage, input: &str) -> anyhow::Result<()> {
+pub fn install_from_path(store: &ModStorage, input: &str) -> anyhow::Result<Package> {
     // A mod installation follow those step:
     // 1: install the mod
     // 2: install its dependancies (from the lock file)
@@ -39,15 +39,16 @@ pub fn install_from_path(store: &ModStorage, input: &str) -> anyhow::Result<()> 
         &current_dir().context("can't get the current working dir")?,
     )
     .context("can't solve the input path")?;
-    let _package_information = install_from_package_input(store, &package_input)?;
-    println!("warning, no depencies are installed in this version.");
-    Ok(())
+    let package = install_from_package_input(store, &package_input)?;
+    println!("warning, the depencies installation is not yet implemented");
+
+    Ok(package)
 }
 
 pub fn install_from_package_input(
     store: &ModStorage,
     package_input: &PackageInput,
-) -> anyhow::Result<PackageInformation> {
+) -> anyhow::Result<Package> {
     // 1: get the mod metadata
     // 1: install this mod by :
     // 2.1: allocate a tempory folder (identified by mod id and version)
@@ -101,7 +102,7 @@ pub fn install_from_package_input(
                 .install_mod_by_move(&unpack_folder, &identifier, &version)
                 .context("can't move the folder into the destination folder")?;
             println!("the mod {:?} is now installed", identifier);
-            Ok(package_information)
+            Ok(Package::load_from_folder(store.mod_folder(identifier, version)).context("internal error: unable to get information about the mod, even when it was successfully installed")?)
         }
     }
 }
