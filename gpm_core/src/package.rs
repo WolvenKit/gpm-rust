@@ -1,5 +1,5 @@
-use crate::{constants::LOCK_FILE_PATH, package_information::PackageInformation};
 use crate::stored_package_information::StoredPackageInformation;
+use crate::{constants::LOCK_FILE_PATH, package_information::PackageInformation};
 use crate::{
     constants::{JSON_CONFIG_PATH, TOML_CONFIG_PATH},
     lockfile::LockFile,
@@ -150,7 +150,8 @@ impl Package {
 
     /// Save both the lockfile and the configuration path. This isn't atomic, so it may result in corrupted configuration or lockfile files.
     pub fn save_configuration_and_lockfile(&self) -> anyhow::Result<()> {
-        self.save_configuration().context("can't save the configuration file")?;
+        self.save_configuration()
+            .context("can't save the configuration file")?;
         self.save_lockfile().context("can't save the lockfile")
     }
 }

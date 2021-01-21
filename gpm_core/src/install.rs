@@ -1,7 +1,6 @@
 use crate::mod_storage::ModStorage;
 use crate::package_information::PackageInformation;
 use crate::stored_package_information::StoredPackageInformation;
-use crate::tool::canonicalize_folder;
 use crate::{constants::JSON_CONFIG_PATH, package::Package};
 use anyhow::Context;
 use std::fs::File;
@@ -15,7 +14,12 @@ pub enum PackageInput {
 
 impl PackageInput {
     pub fn from_local_path(path: &Path) -> anyhow::Result<Self> {
-        Ok(Self::LocalPath(canonicalize_folder(path)?))
+        Ok(Self::LocalPath(path.canonicalize().with_context(|| {
+            format!(
+                "Can't canonicalize {:?}. The file probably doesn't exist.",
+                path
+            )
+        })?))
     }
 }
 
@@ -23,8 +27,8 @@ pub fn install_from_path(store: &ModStorage, input: &Path) -> anyhow::Result<Pac
     // A mod installation follow those step:
     // 1: install the mod
     // 2: install its dependancies (from the lock file)
-    let package_input = PackageInput::from_local_path(input)
-        .context("can't solve the input path")?;
+    let package_input =
+        PackageInput::from_local_path(input).context("can't solve the input path")?;
     let package = install_from_package_input(store, &package_input)?;
     println!("warning, the depencies installation is not yet implemented");
     Ok(package)
