@@ -9,3 +9,6 @@ termcolor = "1.1.2"
 anyhow = "1.0.35"
 thiserror = "1.0.22"
 gpm_core = { path="../gpm_core" }
+
+[dev-dependencies]
+tempfile = "3.2.0"

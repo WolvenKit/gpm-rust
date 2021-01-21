@@ -5,9 +5,9 @@ use std::path::{Path, PathBuf};
 
 use crate::constants::{IGNORE_PATH, JSON_CONFIG_PATH};
 use crate::display::list::format_str_id_list;
-use crate::store_project::{
-    get_project_config_json, load_package_from_project, LoadPackageFromProjectError,
-};
+
+use crate::package::Package;
+use crate::stored_package_information::StoredPackageInformation;
 
 use walkdir::WalkDir;
 use zip::{
@@ -15,7 +15,6 @@ use zip::{
     CompressionMethod,
 };
 
-use ignore;
 use ignore::gitignore::GitignoreBuilder;
 
 #[derive(thiserror::Error, Debug)]
@@ -23,7 +22,7 @@ pub enum CreatePackageError {
     #[error("io error while reading {0}")]
     FileIOError(PathBuf, #[source] io::Error),
     #[error("error while loading the package in {0}")]
-    LoadPackageError(PathBuf, #[source] LoadPackageFromProjectError),
+    LoadPackageError(PathBuf, #[source] anyhow::Error),
     #[error("error while running walkdir")]
     WalkDirError(#[from] walkdir::Error),
     #[error("error stripping a the path {0} with {1}")]
@@ -45,7 +44,7 @@ pub fn create_package<D: Write + Seek>(
     destination: &mut D,
 ) -> Result<(), CreatePackageError> {
     // load the package
-    let package = load_package_from_project(&input_dir)
+    let package = Package::load_from_folder(input_dir.to_path_buf())
         .map_err(|err| CreatePackageError::LoadPackageError(input_dir.to_path_buf(), err))?;
 
     let missing_publish_field = package.information.missing_publish_field();
@@ -93,6 +92,10 @@ pub fn create_package<D: Write + Seek>(
             )
         })?;
 
+        if content_rel_path.iter().next() == None {
+            continue;
+        };
+
         if content_rel_path == PathBuf::from(JSON_CONFIG_PATH) {
             continue;
         };
@@ -128,7 +131,9 @@ pub fn create_package<D: Write + Seek>(
             zip.add_directory(content_rel_path.to_string_lossy(), zip_options)?;
         }
     }
-    let config_json: Vec<u8> = get_project_config_json(&package.information)
+
+    let config_json = StoredPackageInformation::from(&package.information)
+        .generate_json()
         .map_err(CreatePackageError::EncodeJsonError)?;
     zip.start_file(JSON_CONFIG_PATH, zip_options)?;
     zip.write_all(&config_json)
