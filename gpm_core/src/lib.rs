@@ -10,8 +10,9 @@ pub mod stored_package_information;
 pub mod tool;
 
 pub mod constants {
-    pub const TOML_CONFIG_PATH: &str = "config.toml";
-    pub const JSON_CONFIG_PATH: &str = "config.json";
+    pub const TOML_CONFIG_PATH: &str = "gpm.toml";
+    pub const JSON_CONFIG_PATH: &str = "gpm.json";
+    pub const LOCK_FILE_PATH: &str = "gpm.lock";
     pub const IGNORE_PATH: &str = ".modignore";
     pub const MOD_STORAGE_SEPARATOR: &str = "|";
     pub const STORAGE_TEMPORY_FOLDER_NAME: &str = ".tmp";

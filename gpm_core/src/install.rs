@@ -1,9 +1,9 @@
 use crate::mod_storage::ModStorage;
 use crate::package_information::PackageInformation;
 use crate::stored_package_information::StoredPackageInformation;
+use crate::tool::canonicalize_folder;
 use crate::{constants::JSON_CONFIG_PATH, package::Package};
 use anyhow::Context;
-use std::env::current_dir;
 use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
@@ -14,34 +14,19 @@ pub enum PackageInput {
 }
 
 impl PackageInput {
-    pub fn solve_input(input: &str, current_dir: &Path) -> anyhow::Result<Self> {
-        if input.starts_with('.') || input.starts_with('/') {
-            let mut package_dir = PathBuf::from(input);
-            if package_dir.is_relative() {
-                package_dir = current_dir.join(&package_dir);
-            };
-            Ok(Self::LocalPath(package_dir))
-        } else {
-            return Err(anyhow::Error::msg(format!(
-                "{:?} is not a reconized input. Did you meant ./{:?} ?",
-                input, input
-            )));
-        }
+    pub fn from_local_path(path: &Path) -> anyhow::Result<Self> {
+        Ok(Self::LocalPath(canonicalize_folder(path)?))
     }
 }
 
-pub fn install_from_path(store: &ModStorage, input: &str) -> anyhow::Result<Package> {
+pub fn install_from_path(store: &ModStorage, input: &Path) -> anyhow::Result<Package> {
     // A mod installation follow those step:
     // 1: install the mod
     // 2: install its dependancies (from the lock file)
-    let package_input = PackageInput::solve_input(
-        input,
-        &current_dir().context("can't get the current working dir")?,
-    )
-    .context("can't solve the input path")?;
+    let package_input = PackageInput::from_local_path(input)
+        .context("can't solve the input path")?;
     let package = install_from_package_input(store, &package_input)?;
     println!("warning, the depencies installation is not yet implemented");
-
     Ok(package)
 }
 

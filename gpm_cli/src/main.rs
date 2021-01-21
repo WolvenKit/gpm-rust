@@ -44,7 +44,7 @@ fn main() -> Result<(), anyhow::Error> {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("install")
+            SubCommand::with_name("install_local")
                 .about("install a mod for the current profile")
                 .arg(
                     Arg::with_name("input")
@@ -75,9 +75,9 @@ fn main() -> Result<(), anyhow::Error> {
                 output_file: PathBuf::from(archive_arg.value_of("output_file").unwrap()), //unwrap: output_file is required
             })?;
         }
-        ("install", Some(install_arg)) => commands::install::install(
-            commands::install::InstallParameter {
-                input: install_arg.value_of("input").unwrap().to_string(),
+        ("install_local", Some(install_arg)) => commands::install_local::install_local(
+            commands::install_local::InstallLocalParameter {
+                input: PathBuf::from(install_arg.value_of("input").unwrap()),
             },
             config,
         )?,

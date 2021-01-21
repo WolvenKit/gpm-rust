@@ -29,9 +29,9 @@ fn test_command_create_install_package() {
     })
     .unwrap();
 
-    commands::install::install(
-        commands::install::InstallParameter {
-            input: package_path.to_str().unwrap().to_string(),
+    commands::install_local::install_local(
+        commands::install_local::InstallLocalParameter {
+            input: package_path.to_path_buf(),
         },
         config,
     )

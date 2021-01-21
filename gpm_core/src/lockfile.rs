@@ -61,6 +61,11 @@ impl LockFile {
         self.dependencies.iter()
     }
 
+    /// return true if this LockFile doesn't contain any locked depency, false otherwise
+    pub fn is_empty(&self) -> bool {
+        self.dependencies.is_empty()
+    }
+
     /// load the lock file from input TOML stream
     pub fn load_reader<T: Read>(input: &mut T) -> Result<Self, anyhow::Error> {
         let mut buffer = Vec::new();
